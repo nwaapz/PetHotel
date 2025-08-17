@@ -9,20 +9,34 @@ using UnityEngine.UI;
 public class RpsView : MonoBehaviour
 {
     public TMP_Text PlayerScoreText, BotScoreText;
-    public GameObject MatchOverPanel,MessageBox;
-    public TMP_Text matchOverText,MessageText;
+    public GameObject MatchOverPanel,MessageBox,ResultBoard;
+    public TMP_Text matchOverText,MessageText,ResultBoardText;
     [SerializeField] RectTransform Player_Item_1, Player_Item_2, Player_Item_3, Opponent_Item;
     [SerializeField] Sprite _Rock, _Paper, _Scissors;
     [SerializeField] Image _OpponentImage;
-    [SerializeField] Button RoundFinishBtn;
-
+    [SerializeField] Button RoundFinishBtn,ExitBtn;
+    private float cartAnimationDuration;
     //caching height of the items for animation
     private float Player_Item_Hide_Height, Player_Item_Show_Height, Player_Item_Select_Height,
         Opponent_Item_Hide_Height, Opponent_Item_Show_Height;
 
+    Action ConfirmAction;
+
+   
+
+    private void OnDisable()
+    {
+        RpsController.Instance.GameEnd -= FinalMessage; 
+    }
+
+
+
+
 
     private void Start()
     {
+        RpsController.Instance.GameEnd += FinalMessage;
+
         Player_Item_Show_Height = Player_Item_1.anchoredPosition.y;
         Opponent_Item_Show_Height = Opponent_Item.anchoredPosition.y;   
 
@@ -42,20 +56,25 @@ public class RpsView : MonoBehaviour
         });
     }
 
-    public void ShowResult()
+    public void ShowResult(string result)
     {
-        MatchOverPanel.SetActive(true);    
+        ResultBoard.SetActive(true);    
         RoundFinishBtn.gameObject.SetActive(true);
         RoundFinishBtn.interactable = true;
-        RoundFinishBtn.GetComponentInChildren<TMP_Text>().text = "Next Round";
+        
+        ResultBoardText.text = result;
+
     }
 
     void RoundFinishClicked()
     {
+        
         Show_Player_Items();
         Hide_Opponent_choice();
-        MatchOverPanel.SetActive(false);    
-
+        MatchOverPanel.SetActive(false);
+        ResultBoard.SetActive(false);   
+        ConfirmAction?.Invoke();
+        ExitBtn.gameObject.SetActive(false);
     }
 
 
@@ -86,7 +105,7 @@ public class RpsView : MonoBehaviour
         if (opponentSprite != null)
         {
             _OpponentImage.sprite = opponentSprite;
-            Opponent_Item.DOAnchorPosY(Opponent_Item_Show_Height, 0.5f).SetEase(Ease.InOutSine)
+            Opponent_Item.DOAnchorPosY(Opponent_Item_Show_Height, cartAnimationDuration).SetEase(Ease.InOutSine)
                 .OnComplete(() => UnityEngine.Debug.Log("Opponent choice shown: " + choice));
         }
         else
@@ -97,13 +116,18 @@ public class RpsView : MonoBehaviour
 
     public void Hide_Opponent_choice()
     {
-        Opponent_Item.DOAnchorPosY(Opponent_Item_Hide_Height, 0.5f).SetEase(Ease.InOutSine);    
+        Opponent_Item.DOAnchorPosY(Opponent_Item_Hide_Height, cartAnimationDuration).SetEase(Ease.InOutSine);    
     }
 
-    public void Select_Player_Item(RectTransform item,Action callback)
+    public void Select_Player_Item(RectTransform item,Action callbackAfterSelection,
+        string result,float animationDuration,Action callbackAfterRoundConfirm)
     {
-        item.DOAnchorPosY(Player_Item_Select_Height, 0.2f).SetEase(Ease.InOutSine)
-         .OnComplete(() => callback?.Invoke());
+        RoundFinishBtn.GetComponentInChildren<TMP_Text>().text = "Next Round";
+        cartAnimationDuration = animationDuration;
+        ConfirmAction = callbackAfterRoundConfirm;
+
+        item.DOAnchorPosY(Player_Item_Select_Height, cartAnimationDuration).SetEase(Ease.InOutSine)
+         .OnComplete(() => callbackAfterSelection?.Invoke());
 
 
         StartCoroutine(showResCo());
@@ -111,23 +135,23 @@ public class RpsView : MonoBehaviour
         IEnumerator showResCo()
         {
             yield return new WaitForSeconds(1);
-            ShowResult();
+            ShowResult(result);
         }   
 
     }
 
     public void Hide_Player_Items()
     {
-        Player_Item_1.DOAnchorPosY(Player_Item_Hide_Height, 0.5f).SetEase(Ease.InOutSine);
-        Player_Item_2.DOAnchorPosY(Player_Item_Hide_Height, 0.5f).SetEase(Ease.InOutSine);
-        Player_Item_3.DOAnchorPosY(Player_Item_Hide_Height, 0.5f).SetEase(Ease.InOutSine);
+        Player_Item_1.DOAnchorPosY(Player_Item_Hide_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
+        Player_Item_2.DOAnchorPosY(Player_Item_Hide_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
+        Player_Item_3.DOAnchorPosY(Player_Item_Hide_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
     }
 
     public void Show_Player_Items()
     {
-        Player_Item_1.DOAnchorPosY(Player_Item_Show_Height, 0.5f).SetEase(Ease.InOutSine);
-        Player_Item_2.DOAnchorPosY(Player_Item_Show_Height, 0.5f).SetEase(Ease.InOutSine);
-        Player_Item_3.DOAnchorPosY(Player_Item_Show_Height, 0.5f).SetEase(Ease.InOutSine);  
+        Player_Item_1.DOAnchorPosY(Player_Item_Show_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
+        Player_Item_2.DOAnchorPosY(Player_Item_Show_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
+        Player_Item_3.DOAnchorPosY(Player_Item_Show_Height, cartAnimationDuration).SetEase(Ease.InOutSine);  
     }
 
     public void Show_Message(string msg,bool fade = false,float fadeDuration = 0)
@@ -151,6 +175,14 @@ public class RpsView : MonoBehaviour
     {
         MessageText.gameObject.SetActive(false);
         MessageBox.SetActive(false);    
+    }
+    void FinalMessage(string text)
+    {
+        MatchOverPanel.gameObject.SetActive(true);
+        matchOverText.text = text;  
+        ExitBtn.gameObject.SetActive(true);
+        ExitBtn.onClick.AddListener(() => {Application.Quit(); });
+        RoundFinishBtn.GetComponentInChildren<TMP_Text>().text = "Play Again";
     }
 
 

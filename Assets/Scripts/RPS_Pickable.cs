@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class RSP_Pickable : MonoBehaviour
+public class RPS_Pickable : MonoBehaviour
 {
     public Choice choice;
 

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 
 public class RpsController : Singleton<RpsController>
@@ -8,13 +9,17 @@ public class RpsController : Singleton<RpsController>
     private GameDataModel model;
     private System.Random rng;
     private bool IsRoundStarted = false;
-    [SerializeField] float CountFadeDuration = 0.3f;    
+    [SerializeField] float CountFadeDuration = 0.3f,CartAnimationDuration = 0.3f;    
+    public event Action<string> GameEnd;
+
 
     private void Start()
     {
         GameStart();
         Round_Start();
     }
+
+
 
     private void GameStart()
     {
@@ -55,6 +60,7 @@ public class RpsController : Singleton<RpsController>
             return;
         }
 
+        IsRoundStarted = false; 
 
         Choice player = (Choice)choiceIndex;
         Choice bot = (Choice)rng.Next(0, 3);
@@ -63,12 +69,12 @@ public class RpsController : Singleton<RpsController>
 
         string resultMsg = result switch
         {
-            RoundResult.PlayerWin => "Player Wins",
-            RoundResult.BotWin => "Bot Wins",
+            RoundResult.PlayerWin => "You Scored",
+            RoundResult.BotWin => "Bot Scored",
             _ => "Draw"
         };
 
-        view.Select_Player_Item(item, CalculateScores);
+        view.Select_Player_Item(item, CalculateScores,resultMsg,CartAnimationDuration,endGameConfirm);
 
         view.Show_Opponent_choice(bot);
         
@@ -79,13 +85,37 @@ public class RpsController : Singleton<RpsController>
             
         }
 
+        void endGameConfirm()
+        {
+            if(model.IsMatchOver())
+            {
+                GameStart();
+                Round_Start();
+            }
+            else
+            {
+                StartCoroutine(callbackDelayed(() => { IsRoundStarted = true; }, CartAnimationDuration));
+            }
+            
+
+        }
        
 
 
         if (model.IsMatchOver())
         {
-            string finalMsg = model.PlayerScore > model.BotScore ? "You Win!" : "Bot Wins!";
-            view.ShowMatchOver(finalMsg);
+            
+            string finalMsg = model.PlayerScore > model.BotScore ? "You Won!" : "You Lost!";
+            GameEnd?.Invoke(finalMsg);
+            
         }
     }
+
+    IEnumerator callbackDelayed(Action action,float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        print("can play now");
+        action?.Invoke();   
+    }
+
 }
