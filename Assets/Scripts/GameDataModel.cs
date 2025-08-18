@@ -36,6 +36,12 @@ public enum Choice
 }
 public enum RoundResult
 {
-    Draw,PlayerWin,BotWin
+    Draw,PlayerWin,BotWin,playing
+}
+public enum GameResult
+{
+    Playing,
+    PlayerWon,
+    BotWon
 }
 

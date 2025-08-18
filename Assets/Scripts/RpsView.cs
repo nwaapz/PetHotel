@@ -21,17 +21,17 @@ public class RpsView : MonoBehaviour
         Opponent_Item_Hide_Height, Opponent_Item_Show_Height;
 
     Action ConfirmAction;
-   
+    Coroutine AutoNextRound;
 
     private void OnDisable()
     {
-        RpsController.Instance.GameEnd -= FinalMessage; 
+        RpsController.Instance.GameEnd -= ShowFinalBoard; 
     }
 
 
     private void Start()
     {
-        RpsController.Instance.GameEnd += FinalMessage;
+        RpsController.Instance.GameEnd += ShowFinalBoard;
 
         Player_Item_Show_Height = Player_Item_1.anchoredPosition.y;
         Opponent_Item_Show_Height = Opponent_Item.anchoredPosition.y;   
@@ -71,6 +71,8 @@ public class RpsView : MonoBehaviour
         ResultBoard.SetActive(false);   
         ConfirmAction?.Invoke();
         ExitBtn.gameObject.SetActive(false);
+        RpsController.Instance.RoundResult = RoundResult.playing;
+        StopCoroutine(AutoNextRound);
     }
 
 
@@ -119,7 +121,7 @@ public class RpsView : MonoBehaviour
     }
 
     public void Select_Player_Item(RectTransform item,Action callbackAfterSelection,
-        string result,float animationDuration,Action callbackAfterRoundConfirm)
+        string result,float animationDuration,Action callbackAfterRoundConfirm,bool GameEnded)
     {
 
         SFX_Player.Instance.Play_whosh();
@@ -133,6 +135,9 @@ public class RpsView : MonoBehaviour
 
 
         StartCoroutine(showResCo());
+
+        if(!GameEnded)
+        AutoNextRound = StartCoroutine(RpsController.Instance.callbackDelayed(RoundFinishClicked, 5));
 
         IEnumerator showResCo()
         {
@@ -174,8 +179,7 @@ public class RpsView : MonoBehaviour
         {
             MessageText.DOFade(0, fadeDuration).From(1f).SetEase(Ease.InOutSine)
                 .OnComplete(() => MessageText.gameObject.SetActive(false));
-        }
-        
+        }        
             
     }
 
@@ -214,13 +218,23 @@ public class RpsView : MonoBehaviour
         MessageText.gameObject.SetActive(false);
         MessageBox.SetActive(false);    
     }
-    void FinalMessage(string text)
+    void ShowFinalBoard(string text)
     {
         MatchOverPanel.gameObject.SetActive(true);
         matchOverText.text = text;  
         ExitBtn.gameObject.SetActive(true);
         ExitBtn.onClick.AddListener(() => {Application.Quit(); });
         RoundFinishBtn.GetComponentInChildren<TMP_Text>().text = "Play Again";
+
+        if(RpsController.Instance.GameResult == GameResult.PlayerWon)
+        {
+            MatchOverPanel.GetComponent<Image>().color = RpsController.Instance.winner;
+        }
+        else
+        {
+            MatchOverPanel.GetComponent<Image>().color = RpsController.Instance.loser;
+        }
+
     }
 
 

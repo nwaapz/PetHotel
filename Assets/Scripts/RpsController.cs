@@ -13,6 +13,8 @@ public class RpsController : Singleton<RpsController>
     public event Action<string> GameEnd;
     public Color winner, loser, draw, ReadyPlay;
 
+    public RoundResult RoundResult;
+    public GameResult GameResult;
 
     private void Start()
     {
@@ -20,17 +22,18 @@ public class RpsController : Singleton<RpsController>
         Round_Start();
     }
 
-
-
     private void GameStart()
     {
         model = new GameDataModel(WinRounds);
         rng = new System.Random();
         view.UpdateUI(0, 0);
+        GameResult = GameResult.Playing;
+        
     }
 
     private void Round_Start()
     {
+        RoundResult = RoundResult.playing;
 
         StartCoroutine(CountDown());    
 
@@ -70,19 +73,19 @@ public class RpsController : Singleton<RpsController>
         Choice player = (Choice)choiceIndex;
         Choice bot = (Choice)rng.Next(0, 3);
 
-        RoundResult result = model.PlayRound(player, bot);
+        RoundResult = model.PlayRound(player, bot);
 
-        string resultMsg = result switch
+        string resultMsg = RoundResult switch
         {
             RoundResult.PlayerWin => "You Scored",
             RoundResult.BotWin => "Bot Scored",
             _ => "Draw"
         };
 
-        view.Select_Player_Item(item, UpdateScoresInView,resultMsg,CartAnimationDuration,endGameConfirm);
+        view.Select_Player_Item(item, UpdateScoresInView,resultMsg,CartAnimationDuration,endGameConfirm
+            ,model.IsMatchOver());
 
-        view.Show_Opponent_choice(bot);
-        
+        view.Show_Opponent_choice(bot);        
         
         void UpdateScoresInView()
         {
@@ -92,7 +95,7 @@ public class RpsController : Singleton<RpsController>
             void updateAndSfxAfterCartSelection()
             {
                 view.UpdateUI(model.PlayerScore, model.BotScore);
-                if (result == RoundResult.PlayerWin)
+                if (RoundResult == RoundResult.PlayerWin)
                 {
                     SFX_Player.Instance.Play_Player_Score();
                     view.AnimatePlayerScore();
@@ -100,7 +103,7 @@ public class RpsController : Singleton<RpsController>
                     view.SetResultBoardColor(winner);
                     view.SetOpponentCardColor(loser);
                 }
-                else if (result == RoundResult.BotWin)
+                else if (RoundResult == RoundResult.BotWin)
                 {
                     SFX_Player.Instance.Play_Bot_Score();
                     view.AnimateOpponentScore();
@@ -129,8 +132,7 @@ public class RpsController : Singleton<RpsController>
             else
             {
                 StartCoroutine(callbackDelayed(() => { IsRoundStarted = true; }, CartAnimationDuration));
-            }
-            
+            }            
 
         }
        
@@ -151,12 +153,14 @@ public class RpsController : Singleton<RpsController>
                 {
                     finalMsg = "You Won";
                     SFX_Player.Instance.Play_Player_Win();
+                    GameResult = GameResult.PlayerWon;
                 }
 
                 void PlayerLostSetup()
                 {
                     finalMsg = "You Lost";
                     SFX_Player.Instance.Play_Player_Lose();
+                    GameResult = GameResult.BotWon;
                 }
 
                 GameEnd?.Invoke(finalMsg);
@@ -164,7 +168,7 @@ public class RpsController : Singleton<RpsController>
         }
     }
 
-    IEnumerator callbackDelayed(Action action,float delay)
+    public IEnumerator callbackDelayed(Action action,float delay)
     {
         yield return new WaitForSeconds(delay);
         print("can play now");
