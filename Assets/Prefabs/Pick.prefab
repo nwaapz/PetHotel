@@ -297,7 +297,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.16470589, g: 0.8313726, b: 0.4156863, a: 1}
+  m_Color: {r: 0.13725491, g: 0.16078432, b: 0.5019608, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -415,6 +415,7 @@ GameObject:
   - component: {fileID: 6555866088568184710}
   - component: {fileID: 460865331285181254}
   - component: {fileID: 5224081381186690239}
+  - component: {fileID: 3592031689358768456}
   m_Layer: 5
   m_Name: Pick
   m_TagString: Untagged
@@ -496,3 +497,16 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+--- !u!114 &3592031689358768456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5543518539382322790}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5cd69333dc17c14396dbe3a34a59588, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 2741378882985917406}

@@ -21,16 +21,12 @@ public class RpsView : MonoBehaviour
         Opponent_Item_Hide_Height, Opponent_Item_Show_Height;
 
     Action ConfirmAction;
-
    
 
     private void OnDisable()
     {
         RpsController.Instance.GameEnd -= FinalMessage; 
     }
-
-
-
 
 
     private void Start()
@@ -116,12 +112,18 @@ public class RpsView : MonoBehaviour
 
     public void Hide_Opponent_choice()
     {
-        Opponent_Item.DOAnchorPosY(Opponent_Item_Hide_Height, cartAnimationDuration).SetEase(Ease.InOutSine);    
+        Opponent_Item.DOAnchorPosY(Opponent_Item_Hide_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
+        SFX_Player.Instance.Play_whosh();
+        Opponent_Item.GetComponent<Item_Color>().SetColor(RpsController.Instance.ReadyPlay);
+
     }
 
     public void Select_Player_Item(RectTransform item,Action callbackAfterSelection,
         string result,float animationDuration,Action callbackAfterRoundConfirm)
     {
+
+        SFX_Player.Instance.Play_whosh();
+
         RoundFinishBtn.GetComponentInChildren<TMP_Text>().text = "Next Round";
         cartAnimationDuration = animationDuration;
         ConfirmAction = callbackAfterRoundConfirm;
@@ -145,13 +147,19 @@ public class RpsView : MonoBehaviour
         Player_Item_1.DOAnchorPosY(Player_Item_Hide_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
         Player_Item_2.DOAnchorPosY(Player_Item_Hide_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
         Player_Item_3.DOAnchorPosY(Player_Item_Hide_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
+
+       
     }
 
     public void Show_Player_Items()
     {
         Player_Item_1.DOAnchorPosY(Player_Item_Show_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
         Player_Item_2.DOAnchorPosY(Player_Item_Show_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
-        Player_Item_3.DOAnchorPosY(Player_Item_Show_Height, cartAnimationDuration).SetEase(Ease.InOutSine);  
+        Player_Item_3.DOAnchorPosY(Player_Item_Show_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
+
+        Player_Item_1.GetComponent<Item_Color>().SetColor(RpsController.Instance.ReadyPlay);
+        Player_Item_2.GetComponent<Item_Color>().SetColor(RpsController.Instance.ReadyPlay);
+        Player_Item_3.GetComponent<Item_Color>().SetColor(RpsController.Instance.ReadyPlay);
     }
 
     public void Show_Message(string msg,bool fade = false,float fadeDuration = 0)
@@ -170,6 +178,36 @@ public class RpsView : MonoBehaviour
         
             
     }
+
+    public void AnimatePlayerScore()
+    {
+        PlayerScoreText.transform.DOScale(Vector3.one*2,0.6f)
+            .SetLoops(2,LoopType.Yoyo)
+            .SetEase(Ease.InOutSine);
+    }
+
+    public void AnimateOpponentScore()
+    {
+        BotScoreText.transform.DOScale(Vector3.one * 2, 0.6f)
+            .SetLoops(2, LoopType.Yoyo)
+            .SetEase(Ease.InOutSine);
+    }
+
+    public void SetPlayerCardColor(Item_Color item_Color,Color color)
+    {
+        item_Color.SetColor(color);        
+    }
+
+    public void SetOpponentCardColor(Color color)
+    {
+        Opponent_Item.GetComponent<Item_Color>().SetColor(color);   
+    }
+
+    public void SetResultBoardColor(Color color)
+    {
+        ResultBoard.GetComponent<Item_Color>().SetColor(color);
+    }
+
 
     public void Hide_Message()
     {

@@ -11,6 +11,7 @@ public class RpsController : Singleton<RpsController>
     private bool IsRoundStarted = false;
     [SerializeField] float CountFadeDuration = 0.3f,CartAnimationDuration = 0.3f;    
     public event Action<string> GameEnd;
+    public Color winner, loser, draw, ReadyPlay;
 
 
     private void Start()
@@ -35,9 +36,13 @@ public class RpsController : Singleton<RpsController>
 
         IEnumerator CountDown()
         {
-            for(int i = 3;i > 0; i--)
+            for(int i = 5;i > 0; i--)
             {
                 view.Show_Message(i.ToString(),true,CountFadeDuration);
+                
+                if (i == 1) SFX_Player.Instance.PlayInitBeepFinal();
+                else SFX_Player.Instance.PlayInitBeep();
+
                 yield return new WaitForSeconds(CountFadeDuration);
             }
             view.Hide_Message();
@@ -74,14 +79,43 @@ public class RpsController : Singleton<RpsController>
             _ => "Draw"
         };
 
-        view.Select_Player_Item(item, CalculateScores,resultMsg,CartAnimationDuration,endGameConfirm);
+        view.Select_Player_Item(item, UpdateScoresInView,resultMsg,CartAnimationDuration,endGameConfirm);
 
         view.Show_Opponent_choice(bot);
         
         
-        void CalculateScores()
+        void UpdateScoresInView()
         {
-            view.UpdateUI(model.PlayerScore, model.BotScore);      
+
+            StartCoroutine(callbackDelayed(updateAndSfxAfterCartSelection, 0.5f));
+
+            void updateAndSfxAfterCartSelection()
+            {
+                view.UpdateUI(model.PlayerScore, model.BotScore);
+                if (result == RoundResult.PlayerWin)
+                {
+                    SFX_Player.Instance.Play_Player_Score();
+                    view.AnimatePlayerScore();
+                    view.SetPlayerCardColor(item.GetComponent<Item_Color>(), winner);
+                    view.SetResultBoardColor(winner);
+                    view.SetOpponentCardColor(loser);
+                }
+                else if (result == RoundResult.BotWin)
+                {
+                    SFX_Player.Instance.Play_Bot_Score();
+                    view.AnimateOpponentScore();
+                    view.SetPlayerCardColor(item.GetComponent<Item_Color>(), loser);
+                    view.SetResultBoardColor(loser);    
+                    view.SetOpponentCardColor(winner);
+                }
+                else
+                {
+                    SFX_Player.Instance.Play_Draw();
+                    view.SetPlayerCardColor(item.GetComponent<Item_Color>(), draw);
+                    view.SetResultBoardColor(draw);
+                    view.SetOpponentCardColor(draw);
+                }
+            }
             
         }
 
@@ -104,10 +138,29 @@ public class RpsController : Singleton<RpsController>
 
         if (model.IsMatchOver())
         {
-            
-            string finalMsg = model.PlayerScore > model.BotScore ? "You Won!" : "You Lost!";
-            GameEnd?.Invoke(finalMsg);
-            
+
+            StartCoroutine(callbackDelayed(finalResults, CartAnimationDuration + 0.5f));
+
+            void finalResults()
+            {
+                string finalMsg = null;
+                Action finalAction =  model.PlayerScore > model.BotScore ? playerWonSetup : PlayerLostSetup;
+                finalAction?.Invoke();
+
+                void playerWonSetup()
+                {
+                    finalMsg = "You Won";
+                    SFX_Player.Instance.Play_Player_Win();
+                }
+
+                void PlayerLostSetup()
+                {
+                    finalMsg = "You Lost";
+                    SFX_Player.Instance.Play_Player_Lose();
+                }
+
+                GameEnd?.Invoke(finalMsg);
+            }                        
         }
     }
 
