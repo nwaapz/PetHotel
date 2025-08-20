@@ -4,17 +4,36 @@ using UnityEngine;
 
 public class RpsController : Singleton<RpsController>
 {
+    [Header("References")]
     [SerializeField] private RpsView view;
+
+    [Space(6)]
+    [Header("Gameplay Settings")]
     [SerializeField] private int WinRounds;
+    [SerializeField] private float CountFadeDuration = 0.3f;
+    [SerializeField] private float CartAnimationDuration = 0.3f;
+
+    [Space(6)]
+    [Header("Runtime State")]
     private GameDataModel model;
     private System.Random rng;
-    private bool IsRoundStarted = false;
-    [SerializeField] float CountFadeDuration = 0.3f,CartAnimationDuration = 0.3f;    
-    public event Action<string> GameEnd;
-    public Color winner, loser, draw, ReadyPlay;
+    private bool IsRoundStarted;
 
+    
+    public event Action<string> GameEnd;
+
+    [Space(6)]
+    [Header("Colors")]
+    public Color winner;
+    public Color loser;
+    public Color draw;
+    public Color ReadyPlay;
+
+    [Space(6)]
+    [Header("Results")]
     public RoundResult RoundResult;
     public GameResult GameResult;
+
 
     private void Start()
     {
@@ -60,7 +79,7 @@ public class RpsController : Singleton<RpsController>
     }
 
 
-    public void OnPlayerChoice(int choiceIndex,RectTransform item)
+    public void OnPlayerChoice(Choice choice,RectTransform item)
     {
         if(!IsRoundStarted)
         {
@@ -70,7 +89,7 @@ public class RpsController : Singleton<RpsController>
 
         IsRoundStarted = false; 
 
-        Choice player = (Choice)choiceIndex;
+        Choice player = choice;
         Choice bot = (Choice)rng.Next(0, 3);
 
         RoundResult = model.PlayRound(player, bot);

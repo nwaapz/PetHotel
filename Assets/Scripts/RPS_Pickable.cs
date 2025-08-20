@@ -6,6 +6,6 @@ public class RPS_Pickable : MonoBehaviour
 
     public void Select()
     {
-        RpsController.Instance.OnPlayerChoice((int)choice,GetComponent<RectTransform>()); 
+        RpsController.Instance.OnPlayerChoice(choice,GetComponent<RectTransform>()); 
     }
 }

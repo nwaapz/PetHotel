@@ -1,51 +1,98 @@
 using DG.Tweening;
 using System;
 using System.Collections;
-using System.Diagnostics;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class RpsView : MonoBehaviour
 {
-    public TMP_Text PlayerScoreText, BotScoreText;
-    public GameObject MatchOverPanel,MessageBox,ResultBoard;
-    public TMP_Text matchOverText,MessageText,ResultBoardText;
-    [SerializeField] RectTransform Player_Item_1, Player_Item_2, Player_Item_3, Opponent_Item;
-    [SerializeField] Sprite _Rock, _Paper, _Scissors;
+    [Header("Score UI")]
+    public TMP_Text PlayerScoreText;
+    public TMP_Text BotScoreText;
+
+    [Space(6)]
+    [Header("Panels")]
+    public GameObject MatchOverPanel;
+    public GameObject MessageBox;
+    public GameObject ResultBoard;
+
+    [Space(6)]
+    [Header("Text Elements")]
+    public TMP_Text matchOverText;
+    public TMP_Text MessageText;
+    public TMP_Text ResultBoardText;
+
+    [Space(6)]
+    [Header("Player & Opponent Items")]
+    [SerializeField] RectTransform Player_Item_1;
+    [SerializeField] RectTransform Player_Item_2;
+    [SerializeField] RectTransform Player_Item_3;
+    [SerializeField] RectTransform Opponent_Item;
+
+    [Space(6)]
+    [Header("Sprites & Images")]
+    [SerializeField] Sprite _Rock;
+    [SerializeField] Sprite _Paper;
+    [SerializeField] Sprite _Scissors;
     [SerializeField] Image _OpponentImage;
-    [SerializeField] Button RoundFinishBtn,ExitBtn;
+
+    [Space(6)]
+    [Header("Buttons")]
+    [SerializeField] Button RoundFinishBtn;
+    [SerializeField] Button ExitBtn;
+
+
+    
     private float cartAnimationDuration;
-    //caching height of the items for animation
     private float Player_Item_Hide_Height, Player_Item_Show_Height, Player_Item_Select_Height,
         Opponent_Item_Hide_Height, Opponent_Item_Show_Height;
+    private Item_Color opponentItemColor, player1Color, player2Color, player3Color;
 
     Action ConfirmAction;
     Coroutine AutoNextRound;
 
-    private void OnDisable()
+    private void Awake()
     {
-        RpsController.Instance.GameEnd -= ShowFinalBoard; 
+        opponentItemColor = Opponent_Item.GetComponent<Item_Color>();
+        player1Color = Player_Item_1.GetComponent<Item_Color>();
+        player2Color = Player_Item_2.GetComponent<Item_Color>();
+        player3Color = Player_Item_3.GetComponent<Item_Color>();
     }
 
 
-    private void Start()
+    private void OnDisable()
     {
-        RpsController.Instance.GameEnd += ShowFinalBoard;
+        if (RpsController.Instance != null)
+            RpsController.Instance.GameEnd -= ShowFinalBoard;
+    }
+
+    private void OnEnable()
+    {
+        if (RpsController.Instance != null)
+            RpsController.Instance.GameEnd += ShowFinalBoard;
+    }
+
+
+
+    private void Start()
+    {        
+
+        ExitBtn.onClick.AddListener(() => { Application.Quit(); });
 
         Player_Item_Show_Height = Player_Item_1.anchoredPosition.y;
-        Opponent_Item_Show_Height = Opponent_Item.anchoredPosition.y;   
+        Opponent_Item_Show_Height = Opponent_Item.anchoredPosition.y;
 
 
-        Player_Item_Hide_Height = Player_Item_Show_Height - 100f; 
-        Opponent_Item_Hide_Height = Opponent_Item_Show_Height + 230f; 
+        Player_Item_Hide_Height = Player_Item_Show_Height - 100f;
+        Opponent_Item_Hide_Height = Opponent_Item_Show_Height + 230f;
 
-        Player_Item_Select_Height = Player_Item_Show_Height + 65f; 
+        Player_Item_Select_Height = Player_Item_Show_Height + 65f;
 
         Hide_Player_Items();
         Hide_Opponent_choice();
 
-        RoundFinishBtn.gameObject.SetActive(false); 
+        RoundFinishBtn.gameObject.SetActive(false);
         RoundFinishBtn.onClick.AddListener(() =>
         {
             RoundFinishClicked();
@@ -54,33 +101,38 @@ public class RpsView : MonoBehaviour
 
     public void ShowResult(string result)
     {
-        ResultBoard.SetActive(true);    
+        ResultBoard.SetActive(true);
         RoundFinishBtn.gameObject.SetActive(true);
         RoundFinishBtn.interactable = true;
-        
+
         ResultBoardText.text = result;
 
     }
 
     void RoundFinishClicked()
     {
-        
+
         Show_Player_Items();
         Hide_Opponent_choice();
         MatchOverPanel.SetActive(false);
-        ResultBoard.SetActive(false);   
+        ResultBoard.SetActive(false);
         ConfirmAction?.Invoke();
         ExitBtn.gameObject.SetActive(false);
         RpsController.Instance.RoundResult = RoundResult.playing;
-        StopCoroutine(AutoNextRound);
+
+        if (AutoNextRound != null)
+        {
+            StopCoroutine(AutoNextRound);
+            AutoNextRound = null;
+        }
     }
 
 
     public void UpdateUI(int playerScore, int botScore)
     {
-       
+
         PlayerScoreText.text = playerScore.ToString();
-        BotScoreText.text = botScore.ToString();    
+        BotScoreText.text = botScore.ToString();
     }
 
     public void ShowMatchOver(string msg)
@@ -91,7 +143,7 @@ public class RpsView : MonoBehaviour
 
     public void Show_Opponent_choice(Choice choice)
     {
-        Sprite opponentSprite = choice switch 
+        Sprite opponentSprite = choice switch
         {
             Choice.Rock => _Rock,
             Choice.Paper => _Paper,
@@ -116,12 +168,11 @@ public class RpsView : MonoBehaviour
     {
         Opponent_Item.DOAnchorPosY(Opponent_Item_Hide_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
         SFX_Player.Instance.Play_whosh();
-        Opponent_Item.GetComponent<Item_Color>().SetColor(RpsController.Instance.ReadyPlay);
-
+        opponentItemColor.SetColor(RpsController.Instance.ReadyPlay);
     }
 
-    public void Select_Player_Item(RectTransform item,Action callbackAfterSelection,
-        string result,float animationDuration,Action callbackAfterRoundConfirm,bool GameEnded)
+    public void Select_Player_Item(RectTransform item, Action callbackAfterSelection,
+        string result, float animationDuration, Action callbackAfterRoundConfirm, bool GameEnded)
     {
 
         SFX_Player.Instance.Play_whosh();
@@ -136,14 +187,14 @@ public class RpsView : MonoBehaviour
 
         StartCoroutine(showResCo());
 
-        if(!GameEnded)
-        AutoNextRound = StartCoroutine(RpsController.Instance.callbackDelayed(RoundFinishClicked, 5));
+        if (!GameEnded)
+            AutoNextRound = StartCoroutine(RpsController.Instance.callbackDelayed(RoundFinishClicked, 5));
 
         IEnumerator showResCo()
         {
             yield return new WaitForSeconds(1);
             ShowResult(result);
-        }   
+        }
 
     }
 
@@ -153,7 +204,7 @@ public class RpsView : MonoBehaviour
         Player_Item_2.DOAnchorPosY(Player_Item_Hide_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
         Player_Item_3.DOAnchorPosY(Player_Item_Hide_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
 
-       
+
     }
 
     public void Show_Player_Items()
@@ -162,31 +213,31 @@ public class RpsView : MonoBehaviour
         Player_Item_2.DOAnchorPosY(Player_Item_Show_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
         Player_Item_3.DOAnchorPosY(Player_Item_Show_Height, cartAnimationDuration).SetEase(Ease.InOutSine);
 
-        Player_Item_1.GetComponent<Item_Color>().SetColor(RpsController.Instance.ReadyPlay);
-        Player_Item_2.GetComponent<Item_Color>().SetColor(RpsController.Instance.ReadyPlay);
-        Player_Item_3.GetComponent<Item_Color>().SetColor(RpsController.Instance.ReadyPlay);
+        player1Color.SetColor(RpsController.Instance.ReadyPlay);
+        player2Color.SetColor(RpsController.Instance.ReadyPlay);
+        player3Color.SetColor(RpsController.Instance.ReadyPlay);
     }
 
-    public void Show_Message(string msg,bool fade = false,float fadeDuration = 0)
+    public void Show_Message(string msg, bool fade = false, float fadeDuration = 0)
     {
         MessageBox.SetActive(true);
         MessageText.gameObject.SetActive(true);
         MessageText.text = msg;
 
-        MessageText.DOFade(1, 0).From(0f).SetEase(Ease.InOutSine);  
-        
+        MessageText.DOFade(1, 0).From(0f).SetEase(Ease.InOutSine);
+
         if (fade)
         {
             MessageText.DOFade(0, fadeDuration).From(1f).SetEase(Ease.InOutSine)
                 .OnComplete(() => MessageText.gameObject.SetActive(false));
-        }        
-            
+        }
+
     }
 
     public void AnimatePlayerScore()
     {
-        PlayerScoreText.transform.DOScale(Vector3.one*2,0.6f)
-            .SetLoops(2,LoopType.Yoyo)
+        PlayerScoreText.transform.DOScale(Vector3.one * 2, 0.6f)
+            .SetLoops(2, LoopType.Yoyo)
             .SetEase(Ease.InOutSine);
     }
 
@@ -197,14 +248,14 @@ public class RpsView : MonoBehaviour
             .SetEase(Ease.InOutSine);
     }
 
-    public void SetPlayerCardColor(Item_Color item_Color,Color color)
+    public void SetPlayerCardColor(Item_Color item_Color, Color color)
     {
-        item_Color.SetColor(color);        
+        item_Color.SetColor(color);
     }
 
     public void SetOpponentCardColor(Color color)
     {
-        Opponent_Item.GetComponent<Item_Color>().SetColor(color);   
+        Opponent_Item.GetComponent<Item_Color>().SetColor(color);
     }
 
     public void SetResultBoardColor(Color color)
@@ -216,17 +267,17 @@ public class RpsView : MonoBehaviour
     public void Hide_Message()
     {
         MessageText.gameObject.SetActive(false);
-        MessageBox.SetActive(false);    
+        MessageBox.SetActive(false);
     }
     void ShowFinalBoard(string text)
     {
         MatchOverPanel.gameObject.SetActive(true);
-        matchOverText.text = text;  
+        matchOverText.text = text;
         ExitBtn.gameObject.SetActive(true);
-        ExitBtn.onClick.AddListener(() => {Application.Quit(); });
+        
         RoundFinishBtn.GetComponentInChildren<TMP_Text>().text = "Play Again";
 
-        if(RpsController.Instance.GameResult == GameResult.PlayerWon)
+        if (RpsController.Instance.GameResult == GameResult.PlayerWon)
         {
             MatchOverPanel.GetComponent<Image>().color = RpsController.Instance.winner;
         }
@@ -238,5 +289,4 @@ public class RpsView : MonoBehaviour
     }
 
 
-    }
-
+}
