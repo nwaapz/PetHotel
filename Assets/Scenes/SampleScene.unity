@@ -1762,7 +1762,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   view: {fileID: 1081067567}
-  WinRounds: 2
+  WinRounds: 5
   CountFadeDuration: 1
   CartAnimationDuration: 0.3
   winner: {r: 0.16470589, g: 0.8313726, b: 0.4156863, a: 1}
