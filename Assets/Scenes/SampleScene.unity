@@ -1769,7 +1769,7 @@ MonoBehaviour:
   loser: {r: 0.76470596, g: 0, b: 0, a: 1}
   draw: {r: 0.3301887, g: 0.3301887, b: 0.3301887, a: 1}
   ReadyPlay: {r: 0.12941177, g: 0.16470589, b: 0.5019608, a: 1}
-  RoundResult: 0
+  RoundResult: 1
   GameResult: 0
 --- !u!1 &1189572393
 GameObject:
