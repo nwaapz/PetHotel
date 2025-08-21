@@ -179,7 +179,8 @@ public class RpsController : Singleton<RpsController>
             }
         }
 
-        // Local helper: handle end-of-round or new round setup
+        // Local helper: handle end-of-round or new round setup -
+        // being sent as an action to view.Select_Player_Item()
         void endGameConfirm()
         {
             if (model.IsMatchOver())
@@ -217,12 +218,12 @@ public class RpsController : Singleton<RpsController>
                     SFX_Player.Instance.Play_Player_Lose();
                     GameResult = GameResult.BotWon;
                 }
-
+                
                 GameEnd?.Invoke(finalMsg);
             }
         }
     }
-
+    
     /// <summary>
     /// Utility coroutine: invoke an action after a delay.
     /// </summary>
